@@ -1,8 +1,9 @@
 const express = require("express");
+const companiesRoutes = require("./routes/companies");
 
 const app = express();
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
@@ -13,6 +14,8 @@ app.get("/", (req, res) => {
     version: "1.0.0"
   });
 });
+
+app.use("/api/companies", companiesRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
