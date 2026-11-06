@@ -1,81 +1,125 @@
+
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
 
+// ==========================================
+// Validation helpers
+// ==========================================
+
+// Maximum value for PostgreSQL INTEGER
+const MAX_ID = 2147483647;
+
+function isValidCompanyId(value) {
+  if (
+    typeof value !== "string" ||
+    !/^[1-9]\d*$/.test(value)
+  ) {
+    return false;
+  }
+
+  const id = Number(value);
+
+  return (
+    Number.isSafeInteger(id) &&
+    id > 0 &&
+    id <= MAX_ID
+  );
+}
+
+// ==========================================
 // GET ALL COMPANIES
+// ==========================================
+
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT
+      `
+      SELECT
         id,
         company_name,
         industry,
         location,
         description,
         website
-       FROM companies
-       ORDER BY id ASC`
+      FROM companies
+      ORDER BY id ASC
+      `
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       count: result.rows.length,
-      companies: result.rows
+      companies: result.rows,
     });
 
   } catch (error) {
-    console.error("Error fetching companies:", error);
+    console.error(
+      "Error fetching companies:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Failed to fetch companies"
+      message: "Failed to fetch companies.",
     });
   }
 });
 
+// ==========================================
 // GET COMPANY BY ID
+// ==========================================
+
 router.get("/:id", async (req, res) => {
   try {
-    const companyId = Number(req.params.id);
+    const { id } = req.params;
 
-    if (!Number.isSafeInteger(companyId) || companyId <= 0) {
+    // Validate company ID
+    if (!isValidCompanyId(id)) {
       return res.status(400).json({
         success: false,
-        message: "Invalid company ID"
+        message: "Invalid company ID.",
       });
     }
 
+    const companyId = Number(id);
+
     const result = await pool.query(
-      `SELECT
+      `
+      SELECT
         id,
         company_name,
         industry,
         location,
         description,
         website
-       FROM companies
-       WHERE id = $1`,
+      FROM companies
+      WHERE id = $1
+      `,
       [companyId]
     );
 
     if (result.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "Company not found"
+        message: "Company not found.",
       });
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
-      company: result.rows[0]
+      company: result.rows[0],
     });
 
   } catch (error) {
-    console.error("Error fetching company:", error);
+    console.error(
+      "Error fetching company:",
+      error
+    );
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Failed to fetch company"
+      message: "Failed to fetch company.",
     });
   }
 });
